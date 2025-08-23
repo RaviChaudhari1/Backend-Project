@@ -9,9 +9,9 @@ const registerUser = asyncHandler( async (req,res) => {
 
     // get user data
     const { fullName, email, username, password} = req.body // json data and form data
-    console.log(req.body);
+    console.log("Request Body sent by User: ",req.body);
     
-    console.log(email);
+    // console.log(email);
 
 
     // validation - not empty
@@ -21,7 +21,7 @@ const registerUser = asyncHandler( async (req,res) => {
 
 
     // check if user already exists - username/email
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{username}, {email}]
     })
 
@@ -34,8 +34,13 @@ const registerUser = asyncHandler( async (req,res) => {
     // req.body - text data (express)
     //req.files - file data (multer middleware)
     const avatarLocalPath = req.files?.avatar[0]?.path // multer file object
-    // console.log(req.files);
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
+    console.log("User controller, files sent by User:", req.files);
+
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path
 
     if (!avatarLocalPath){
         throw new ApiError(400, "Avatar is required")
@@ -55,7 +60,7 @@ const registerUser = asyncHandler( async (req,res) => {
 
     // create user object - create entry in db
     const user = await User.create({
-        fullname,
+        fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email,
