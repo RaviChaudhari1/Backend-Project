@@ -53,7 +53,7 @@ const userSchema = new Schema(
 // Hash the password before saving the user - Mongoose middleware
 userSchema.pre("save", async function (next){
     if(!this.isModified("password")) return next(); //only hash the password if it has been modified (or is new)
-    this.password = bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 10);
     next()
 
     // if (this.isModified("password")) {
@@ -85,6 +85,10 @@ userSchema.methods.generateAccessToken = function () {
         }
 )
 }
+
+// _id is a primary key for each document in MongoDB.
+// It makes every document uniquely identifiable within a collection.
+// Even if you don’t define it, MongoDB will create one for you.
 
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(

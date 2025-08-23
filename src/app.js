@@ -27,5 +27,16 @@ app.get("/", (req, res) => {
   res.send("Welcome to the API!");
 });
 
+// routes importing
+
+import userRouter from "./routes/user.route.js";
+
+
+// route declaration
+app.use("/api/v1/users", userRouter)
+
+
+
+
 
 export default app;
