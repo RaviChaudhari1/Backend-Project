@@ -8,13 +8,18 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
+    console.log("user found for token generation: ", user);
+    
     const accessToken = user.generateAccessToken();
-    const refreshTooken = user.generateRefreshToken();
+    console.log("Access Token generated: ", accessToken);
+    
+    const refreshToken = user.generateRefreshToken();
+    console.log("Refresh Token generated: ", refreshToken);
 
-    user.refreshToken = refreshTooken;
+    user.refreshToken = refreshToken;
     // passing validateBeforeSave: false to avoid re-validation of the user schema (password required)
     await user.save({ validateBeforeSave: false });
-    return { accessToken, refreshTooken };
+    return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(500, "Token generation failed");
   }
@@ -105,7 +110,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   // data from req.body
   const { email, username, password } = req.body;
-  if (!username || !email) {
+  if (!(username || email)) {
     throw new ApiError(400, "Username or email is required");
   }
 
@@ -128,9 +133,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   // generate access and refresh token
-  const { accessToken, refreshTooken } = await generateAccessAndRefreshTokens(
-    user._id
-  );
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
   // new user object with generated tokens or update previous user object
   const loggedInUser = await User.findById(user._id).select(
@@ -145,7 +148,7 @@ const loginUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .cookie("accesstoken", accessToken, options)
-    .cookie("refreshToken", refreshToken, optioons)
+    .cookie("refreshToken", refreshToken, options)
     .json(
       new ApiResponse(
         200,
