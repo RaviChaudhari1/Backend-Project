@@ -266,7 +266,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Fullname and email are required")
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user._id,
     {
       $set: { fullName, email}
@@ -308,6 +308,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   return res.status(200)
   .json(new ApiResponse(200, user, "Avatar updated successfully"))
+
+  // TASK: delete previous avatar from cloudinary
 })
 
 
@@ -339,6 +341,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
   return res.status(200)
   .json(new ApiResponse(200, user, "Cover image updated successfully"))
+  // TASK: delete previous cover image from cloudinary
 
 })
 
