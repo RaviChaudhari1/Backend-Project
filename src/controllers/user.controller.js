@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 // method for creating access and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -186,4 +187,48 @@ const logoutUser = asyncHandler(async (req, res) => {
      .json(new ApiResponse(200, {}, "User logged out successfully"))
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // get refresh token from cookies
+    const receivedRefreshToken = req.cookies.refreshToken || req.body.refreshToken // req.body.refreshToken for mobile users
+
+    if (!receivedRefreshToken){
+        throw new ApiError(401, "Unauthorized - No token provided")
+    }
+
+    // verify token
+    try {
+        const decodedToken = jwt.verify(receivedRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+    
+        const user = await User.findById(decodedToken?._id)
+    
+        if (!user){
+            throw new ApiError(401, "Invalid Refresh Token")
+        }
+    
+        if (receivedRefreshToken !== user?.refreshToken){
+            throw new ApiError(401, "Invalid Refresh Token")
+        }
+    
+        // generate new access token
+        const options = {
+            httpOnly: true,
+            secure: true,
+        }
+    
+        const {accessToken, NewRefreshToken} = await generateAccessAndRefreshTokens(user._id)
+    
+        return res.status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", NewRefreshToken, options)
+        .json(new ApiResponse(
+            200, 
+            {accessToken, NewRefreshToken},
+            "Access token refreshed successfully"
+        ))
+    } catch (error) {
+        new ApiError(401, error?.messsage || "Invalid Refresh token")
+    }
+
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };

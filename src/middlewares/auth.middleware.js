@@ -8,6 +8,7 @@ import { ApiError } from "../utils/ApiError.js";
 export const verifyJWT = asyncHandler(async (req, res, next) => {
     // access tokens from cookies (cookie-parser middleware)
     try {
+        // req.cookies is set by cookie-parser middleware - from loginUser method in user.controller.js
         // console.log(req.cookies);
         
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
